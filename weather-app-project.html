@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App del Clima | Dulce María Méndez</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Fondo animado */
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .circle {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 140, 0, 0.1) 0%, transparent 70%);
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .circle:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .circle:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            top: 60%;
+            right: 10%;
+            animation-delay: 5s;
+        }
+
+        .circle:nth-child(3) {
+            width: 250px;
+            height: 250px;
+            bottom: 10%;
+            left: 50%;
+            animation-delay: 10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(50px, -50px); }
+            50% { transform: translate(-30px, -80px); }
+            75% { transform: translate(30px, -30px); }
+        }
+
+        /* Contenedor principal */
+        .container {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 40px;
+            max-width: 550px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 140, 0, 0.3);
+            position: relative;
+            z-index: 1;
+            animation: slideIn 0.6s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            background: linear-gradient(45deg, #ff8c00, #ff6347);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #b8b8d1;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        /* Búsqueda */
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 16px 20px;
+            border: 2px solid rgba(255, 140, 0, 0.3);
+            border-radius: 50px;
+            background: rgba(30, 30, 50, 0.6);
+            color: #fff;
+            font-size: 16px;
+            transition: all 0.3s;
+            min-width: 0;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #ff8c00;
+            box-shadow: 0 0 20px rgba(255, 140, 0, 0.3);
+        }
+
+        .search-input::placeholder {
+            color: #888;
+        }
+
+        .search-btn {
+            padding: 16px 28px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(45deg, #ff8c00, #ff6347);
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(255, 140, 0, 0.4);
+            flex-shrink: 0;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 140, 0, 0.6);
+        }
+
+        .search-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+            display: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 140, 0, 0.3);
+            border-top-color: #ff8c00;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #ff8c00;
+            font-size: 16px;
+        }
+
+        /* Error */
+        .error {
+            background: rgba(255, 99, 71, 0.2);
+            border: 2px solid rgba(255, 99, 71, 0.5);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .error-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .error-text {
+            color: #ff6347;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        /* Resultado del clima */
+        .weather-result {
+            display: none;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .location {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .city-name {
+            font-size: 28px;
+            color: #fff;
+            margin-bottom: 8px;
+            word-wrap: break-word;
+        }
+
+        .coordinates {
+            color: #b8b8d1;
+            font-size: 13px;
+        }
+
+        /* Temperatura principal */
+        .main-weather {
+            text-align: center;
+            padding: 30px 20px;
+            background: rgba(255, 140, 0, 0.1);
+            border-radius: 20px;
+            margin-bottom: 25px;
+            border: 2px solid rgba(255, 140, 0, 0.3);
+        }
+
+        .weather-icon {
+            font-size: 70px;
+            margin-bottom: 15px;
+        }
+
+        .temperature {
+            font-size: 56px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #ff8c00, #ff6347);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            line-height: 1;
+        }
+
+        .weather-description {
+            font-size: 18px;
+            color: #b8b8d1;
+            text-transform: capitalize;
+        }
+
+        /* Detalles del clima */
+        .weather-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .detail-card {
+            background: rgba(30, 30, 50, 0.6);
+            padding: 18px 15px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 140, 0, 0.2);
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .detail-card:hover {
+            border-color: #ff8c00;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 140, 0, 0.3);
+        }
+
+        .detail-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .detail-label {
+            color: #b8b8d1;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            color: #fff;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        /* Información adicional */
+        .additional-info {
+            padding: 20px;
+            background: rgba(30, 30, 50, 0.4);
+            border-radius: 15px;
+            border: 2px solid rgba(255, 140, 0, 0.2);
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 140, 0, 0.1);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #b8b8d1;
+            font-size: 14px;
+            flex: 1;
+        }
+
+        .info-value {
+            color: #ff8c00;
+            font-weight: bold;
+            font-size: 14px;
+            text-align: right;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 140, 0, 0.2);
+        }
+
+        .footer-text {
+            color: #888;
+            font-size: 12px;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .footer-link {
+            color: #ff8c00;
+            text-decoration: none;
+        }
+
+        .footer-link:hover {
+            text-decoration: underline;
+        }
+
+        /* ============================================
+           RESPONSIVE DESIGN
+           ============================================ */
+
+        /* Tablets (768px - 1024px) */
+        @media (max-width: 1024px) {
+            .container {
+                padding: 35px;
+            }
+        }
+
+        /* Tablets pequeñas y móviles grandes (600px - 768px) */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                align-items: flex-start;
+                padding-top: 20px;
+            }
+
+            .container {
+                padding: 30px 25px;
+                border-radius: 25px;
+            }
+
+            .header h1 {
+                font-size: 30px;
+            }
+
+            .header p {
+                font-size: 14px;
+            }
+
+            .temperature {
+                font-size: 48px;
+            }
+
+            .weather-icon {
+                font-size: 60px;
+            }
+
+            .city-name {
+                font-size: 24px;
+            }
+
+            .detail-value {
+                font-size: 18px;
+            }
+
+            .detail-icon {
+                font-size: 24px;
+            }
+
+            .weather-details {
+                gap: 10px;
+            }
+        }
+
+        /* Móviles (hasta 600px) */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+                align-items: flex-start;
+                padding-top: 15px;
+            }
+
+            .container {
+                padding: 25px 20px;
+                border-radius: 20px;
+                max-width: 100%;
+            }
+
+            .header h1 {
+                font-size: 26px;
+                margin-bottom: 8px;
+            }
+
+            .header p {
+                font-size: 13px;
+            }
+
+            .search-box {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .search-input {
+                width: 100%;
+                padding: 14px 18px;
+                font-size: 15px;
+            }
+
+            .search-btn {
+                width: 100%;
+                padding: 14px;
+                font-size: 18px;
+            }
+
+            .temperature {
+                font-size: 42px;
+            }
+
+            .weather-icon {
+                font-size: 55px;
+            }
+
+            .city-name {
+                font-size: 22px;
+            }
+
+            .coordinates {
+                font-size: 12px;
+            }
+
+            .weather-description {
+                font-size: 16px;
+            }
+
+            .main-weather {
+                padding: 25px 15px;
+                margin-bottom: 20px;
+            }
+
+            .weather-details {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .detail-card {
+                padding: 16px 12px;
+            }
+
+            .detail-label {
+                font-size: 12px;
+            }
+
+            .detail-value {
+                font-size: 18px;
+            }
+
+            .detail-icon {
+                font-size: 26px;
+            }
+
+            .additional-info {
+                padding: 18px 15px;
+            }
+
+            .info-row {
+                padding: 10px 0;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+
+            .info-label,
+            .info-value {
+                font-size: 13px;
+                text-align: left;
+            }
+
+            .footer-text {
+                font-size: 11px;
+            }
+
+            .loading {
+                padding: 30px 15px;
+            }
+
+            .loading-text {
+                font-size: 15px;
+            }
+
+            .error {
+                padding: 18px 15px;
+            }
+
+            .error-text {
+                font-size: 14px;
+            }
+
+            /* Ocultar círculos en móviles para mejor rendimiento */
+            .circle {
+                display: none;
+            }
+        }
+
+        /* Móviles muy pequeños (hasta 360px) */
+        @media (max-width: 360px) {
+            .container {
+                padding: 20px 15px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .temperature {
+                font-size: 38px;
+            }
+
+            .weather-icon {
+                font-size: 50px;
+            }
+
+            .city-name {
+                font-size: 20px;
+            }
+
+            .detail-value {
+                font-size: 16px;
+            }
+        }
+
+        /* Landscape mode en móviles */
+        @media (max-height: 600px) and (orientation: landscape) {
+            body {
+                align-items: flex-start;
+                padding-top: 10px;
+            }
+
+            .container {
+                margin-top: 10px;
+                margin-bottom: 10px;
+            }
+
+            .header {
+                margin-bottom: 15px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .header p {
+                font-size: 12px;
+            }
+
+            .main-weather {
+                padding: 20px 15px;
+                margin-bottom: 15px;
+            }
+
+            .weather-icon {
+                font-size: 45px;
+                margin-bottom: 10px;
+            }
+
+            .temperature {
+                font-size: 36px;
+            }
+
+            .weather-description {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animación de fondo -->
+    <div class="background-animation">
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+    </div>
+
+    <!-- Contenedor principal -->
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🌤️ App del Clima</h1>
+            <p>Consulta el clima en cualquier ciudad del mundo</p>
+        </div>
+
+        <!-- Caja de búsqueda -->
+        <div class="search-box">
+            <input 
+                type="text" 
+                class="search-input" 
+                id="cityInput" 
+                placeholder="Escribe una ciudad..."
+                autocomplete="off"
+            >
+            <button class="search-btn" id="searchBtn">🔍</button>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p class="loading-text">Obteniendo datos...</p>
+        </div>
+
+        <!-- Error -->
+        <div class="error" id="error">
+            <div class="error-icon">⚠️</div>
+            <p class="error-text" id="errorText">Ciudad no encontrada</p>
+        </div>
+
+        <!-- Resultado del clima -->
+        <div class="weather-result" id="weatherResult">
+            <!-- Ubicación -->
+            <div class="location">
+                <h2 class="city-name" id="cityName">-</h2>
+                <p class="coordinates" id="coordinates">-</p>
+            </div>
+
+            <!-- Clima principal -->
+            <div class="main-weather">
+                <div class="weather-icon" id="weatherIcon">☀️</div>
+                <div class="temperature" id="temperature">--°C</div>
+                <p class="weather-description" id="weatherDescription">-</p>
+            </div>
+
+            <!-- Detalles -->
+            <div class="weather-details">
+                <div class="detail-card">
+                    <div class="detail-icon">🌡️</div>
+                    <p class="detail-label">Sensación</p>
+                    <p class="detail-value" id="feelsLike">--°C</p>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-icon">💧</div>
+                    <p class="detail-label">Humedad</p>
+                    <p class="detail-value" id="humidity">--%</p>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-icon">💨</div>
+                    <p class="detail-label">Viento</p>
+                    <p class="detail-value" id="windSpeed">-- km/h</p>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-icon">🧭</div>
+                    <p class="detail-label">Dirección</p>
+                    <p class="detail-value" id="windDirection">--°</p>
+                </div>
+            </div>
+
+            <!-- Información adicional -->
+            <div class="additional-info">
+                <div class="info-row">
+                    <span class="info-label">Presión Atmosférica</span>
+                    <span class="info-value" id="pressure">-- hPa</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Visibilidad</span>
+                    <span class="info-value" id="visibility">-- km</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Cobertura de Nubes</span>
+                    <span class="info-value" id="cloudCover">--%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p class="footer-text">
+                Datos de <a href="https://open-meteo.com/" target="_blank" class="footer-link">Open-Meteo API</a>
+            </p>
+            <p class="footer-text">
+                Desarrollado por <span style="color: #ff8c00;">Dulce María Méndez</span>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // VARIABLES GLOBALES
+        // ==========================================
+        const cityInput = document.getElementById('cityInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const weatherResult = document.getElementById('weatherResult');
+
+        // ==========================================
+        // FUNCIÓN PRINCIPAL: BUSCAR CLIMA
+        // ==========================================
+        async function searchWeather() {
+            const cityName = cityInput.value.trim();
+            
+            if (!cityName) {
+                showError('Por favor, escribe el nombre de una ciudad');
+                return;
+            }
+
+            showLoading();
+            hideError();
+            hideWeatherResult();
+
+            try {
+                // PASO 1: Obtener coordenadas de la ciudad
+                const geoUrl = `https://nominatim.openstreetmap.org/search?city=${encodeURIComponent(cityName)}&format=json&limit=1`;
+                const geoResponse = await fetch(geoUrl);
+                const geoData = await geoResponse.json();
+
+                if (!geoData || geoData.length === 0) {
+                    throw new Error('Ciudad no encontrada');
+                }
+
+                const { lat, lon, display_name } = geoData[0];
+
+                // PASO 2: Obtener datos del clima
+                const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,cloud_cover,pressure_msl,surface_pressure,wind_speed_10m,wind_direction_10m&timezone=auto`;
+                const weatherResponse = await fetch(weatherUrl);
+                const weatherData = await weatherResponse.json();
+
+                // PASO 3: Mostrar los datos
+                displayWeather(weatherData, display_name, lat, lon);
+
+            } catch (err) {
+                console.error('Error:', err);
+                showError(err.message || 'Error al obtener los datos');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ==========================================
+        // MOSTRAR DATOS DEL CLIMA
+        // ==========================================
+        function displayWeather(data, cityName, lat, lon) {
+            const current = data.current;
+
+            document.getElementById('cityName').textContent = cityName.split(',')[0];
+            document.getElementById('coordinates').textContent = `${parseFloat(lat).toFixed(2)}°, ${parseFloat(lon).toFixed(2)}°`;
+
+            document.getElementById('temperature').textContent = `${Math.round(current.temperature_2m)}°C`;
+            document.getElementById('weatherDescription').textContent = getWeatherDescription(current.weather_code);
+            document.getElementById('weatherIcon').textContent = getWeatherIcon(current.weather_code);
+
+            document.getElementById('feelsLike').textContent = `${Math.round(current.apparent_temperature)}°C`;
+            document.getElementById('humidity').textContent = `${current.relative_humidity_2m}%`;
+            document.getElementById('windSpeed').textContent = `${Math.round(current.wind_speed_10m)} km/h`;
+            document.getElementById('windDirection').textContent = `${current.wind_direction_10m}°`;
+
+            document.getElementById('pressure').textContent = `${current.pressure_msl} hPa`;
+            document.getElementById('visibility').textContent = '> 10 km';
+            document.getElementById('cloudCover').textContent = `${current.cloud_cover}%`;
+
+            showWeatherResult();
+        }
+
+        // ==========================================
+        // DESCRIPCIÓN DEL CLIMA
+        // ==========================================
+        function getWeatherDescription(code) {
+            const descriptions = {
+                0: 'Cielo despejado', 1: 'Principalmente despejado', 2: 'Parcialmente nublado',
+                3: 'Nublado', 45: 'Niebla', 48: 'Niebla con escarcha',
+                51: 'Llovizna ligera', 53: 'Llovizna moderada', 55: 'Llovizna intensa',
+                61: 'Lluvia ligera', 63: 'Lluvia moderada', 65: 'Lluvia intensa',
+                71: 'Nevada ligera', 73: 'Nevada moderada', 75: 'Nevada intensa',
+                77: 'Granizo', 80: 'Chubascos ligeros', 81: 'Chubascos moderados',
+                82: 'Chubascos violentos', 85: 'Nevadas ligeras', 86: 'Nevadas intensas',
+                95: 'Tormenta eléctrica', 96: 'Tormenta con granizo', 99: 'Tormenta intensa'
+            };
+            return descriptions[code] || 'Desconocido';
+        }
+
+        // ==========================================
+        // ICONO DEL CLIMA
+        // ==========================================
+        function getWeatherIcon(code) {
+            if (code === 0) return '☀️';
+            if (code <= 3) return '⛅';
+            if (code <= 48) return '🌫️';
+            if (code <= 55) return '🌦️';
+            if (code <= 65) return '🌧️';
+            if (code <= 77) return '❄️';
+            if (code <= 82) return '🌧️';
+            if (code <= 86) return '❄️';
+            if (code >= 95) return '⛈️';
+            return '🌤️';
+        }
+
+        // ==========================================
+        // FUNCIONES DE UI
+        // ==========================================
+        function showLoading() { loading.style.display = 'block'; }
+        function hideLoading() { loading.style.display = 'none'; }
+        function showError(message) {
+            document.getElementById('errorText').textContent = message;
+            error.style.display = 'block';
+        }
+        function hideError() { error.style.display = 'none'; }
+        function showWeatherResult() { weatherResult.style.display = 'block'; }
+        function hideWeatherResult() { weatherResult.style.display = 'none'; }
+
+        // ==========================================
+        // EVENT LISTENERS
+        // ==========================================
+        searchBtn.addEventListener('click', searchWeather);
+        cityInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchWeather();
+        });
+
+        console.log('🌤️ App del Clima lista');
+        console.log('💻 Desarrollado por Dulce María Méndez Santiago');
+    </script>
+</body>
+</html>
