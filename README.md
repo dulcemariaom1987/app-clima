@@ -120,18 +120,8 @@ php -S localhost:8000
 
 ```
 app-clima/
-│
-├── index.html              # Página principal de la aplicación
-├── css/
-│   └── styles.css         # Estilos de la aplicación (si está separado)
-├── js/
-│   ├── app.js             # Lógica principal
-│   ├── api.js             # Manejo de peticiones API
-│   └── utils.js           # Funciones auxiliares
-├── assets/
-│   ├── icons/             # Iconos del clima
-│   └── images/            # Imágenes de fondo
-├── README.md              # Documentación del proyecto
+├── index.html
+└── README.md
 ```
 
 ---
